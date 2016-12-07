@@ -1,4 +1,4 @@
-package com.cordova.plugin.android.fingerprintkey;
+package com.cordova.plugin.android.tsa;
 
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.CallbackContext;
@@ -11,8 +11,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import io.blocko.coinstack.util.PDFController;
-import io.blocko.coinstack.util.TSAGatewayClient;
+import io.blocko.coinstack.util.TSAGatewayClientAsync;
+import io.blocko.coinstack.util.TSAGatewayException;
 
 @TargetApi(7)
 public class TSAClient extends CordovaPlugin {
@@ -62,112 +66,131 @@ public class TSAClient extends CordovaPlugin {
 		mCallbackContext = callbackContext;
 		Log.v(TAG, "TSA action: " + action);
 		final JSONObject arg_object = args.getJSONObject(0);
-		if (action.equals("initkey")) {
-			// if (!arg_object.has("keyId")) {
-			// mPluginResult = new PluginResult(PluginResult.Status.ERROR);
-			// mCallbackContext.error("Missing required parameters");
-			// mCallbackContext.sendPluginResult(mPluginResult);
-			// return true;
-			// }
-			// FingerprintScanner scanner = new
-			// FingerprintScanner(cordova.getActivity(),
-			// arg_object.getString("keyId"));
+		if (action.equals("stampDocument")) {            
+			if (!arg_object.has("filePath")) {
+                JSONObject resultJson = new JSONObject();
+                resultJson.put("status", "error");
+                resultJson.put("error", "Missing file path");
+                mPluginResult = new PluginResult(PluginResult.Status.OK);
+                mCallbackContext.success(resultJson);
+                mCallbackContext.sendPluginResult(mPluginResult);
+                return true;
+			}
 
-			// if (scanner.isFingerprintAvailable()) {
-			// try {
-			// scanner.generateSeed();
+            if (!arg_object.has("outputPath")) {
+                JSONObject resultJson = new JSONObject();
+                resultJson.put("status", "error");
+                resultJson.put("error", "Missing output file path");
+                mPluginResult = new PluginResult(PluginResult.Status.OK);
+                mCallbackContext.success(resultJson);
+                mCallbackContext.sendPluginResult(mPluginResult);
+                return true;
+			}
 
-			// // try to register
-			// FingerprintScanner.Locale locale = new
-			// FingerprintScanner.Locale();
-			// if (arg_object.has("locale")) {
-			// locale.descText =
-			// arg_object.getJSONObject("locale").getString("desc");//"설명";
-			// locale.cancelText =
-			// arg_object.getJSONObject("locale").getString("cancel");//"취소";
-			// locale.titleText =
-			// arg_object.getJSONObject("locale").getString("title");//"타이틀";
-			// locale.hintText =
-			// arg_object.getJSONObject("locale").getString("hint");//"지문";
-			// locale.successText =
-			// arg_object.getJSONObject("locale").getString("success");//"인식성공";
-			// locale.notRecognizedText =
-			// arg_object.getJSONObject("locale").getString("notrecognized");//"인식실패";
-			// locale.tooManyTries =
-			// arg_object.getJSONObject("locale").getString("toomanytries");//"인식실패";
-			// } else {
-			// locale.descText = "설명";
-			// locale.cancelText = "취소";
-			// locale.titleText = "타이틀";
-			// locale.hintText = "지문";
-			// locale.successText = "인식성공";
-			// locale.notRecognizedText = "인식실패";
-			// locale.tooManyTries =
-			// "연속으로 지문 인증을 실패하였습니다. 잠시 후 다시 이용해 주시기 바랍니다";
-			// }
-			// scanner.setLocale(locale);
+            if (!arg_object.has("gateway")) {
+                JSONObject resultJson = new JSONObject();
+                resultJson.put("status", "error");
+                resultJson.put("error", "Missing TSA gateway URL");
+                mPluginResult = new PluginResult(PluginResult.Status.OK);
+                mCallbackContext.success(resultJson);
+                mCallbackContext.sendPluginResult(mPluginResult);
+                return true;
+			}
 
-			// scanner.startScan(new FingerprintScanner.Callback() {
-			// @Override
-			// public void onSuccess(String privateKey) {
-			// try {
-			// JSONObject resultJson = new JSONObject();
-			// resultJson.put("status", "ok");
-			// resultJson.put("key", privateKey);
-			// mPluginResult = new PluginResult(PluginResult.Status.OK);
-			// mCallbackContext.success(resultJson);
-			// mCallbackContext.sendPluginResult(mPluginResult);
-			// } catch (Exception e) {
-			// e.printStackTrace();
-			// }
-			// }
+            final String filePath = arg_object.getString("filePath");
+            final String outputPath = arg_object.getString("outputPath"); 
+            final String gateway = arg_object.getString("gateway");
 
-			// @Override
-			// public void onError(int errCode, int attempts) {
-			// try {
-			// JSONObject resultJson = new JSONObject();
-			// resultJson.put("status", "error");
-			// resultJson.put("error", errCode);
-			// resultJson.put("attempts", attempts);
-			// mPluginResult = new PluginResult(PluginResult.Status.OK);
-			// mCallbackContext.success(resultJson);
-			// mCallbackContext.sendPluginResult(mPluginResult);
-			// } catch (Exception e) {
-			// e.printStackTrace();
-			// }
-			// }
+            boolean insecure = false;
+            if (arg_object.has("insecure")) {
+                insecure = arg_object.getBoolean("insecure");
+            }
 
-			// @Override
-			// public void onCancel() {
-			// try {
-			// JSONObject resultJson = new JSONObject();
-			// resultJson.put("status", "cancelled");
-			// mPluginResult = new PluginResult(PluginResult.Status.OK);
-			// mCallbackContext.success(resultJson);
-			// mCallbackContext.sendPluginResult(mPluginResult);
-			// } catch (Exception e) {
-			// e.printStackTrace();
-			// }
-			// }
-			// });
-			// } catch (IOException e) {
-			// JSONObject resultJson = new JSONObject();
-			// resultJson.put("status", "error");
-			// resultJson.put("error", "Failed to generate key");
-			// mPluginResult = new PluginResult(PluginResult.Status.OK);
-			// mCallbackContext.success(resultJson);
-			// mCallbackContext.sendPluginResult(mPluginResult);
-			// }
-			// } else {
-			JSONObject resultJson = new JSONObject();
-			resultJson.put("status", "error");
-			resultJson.put("error", "Fingerprint authentication not available");
-			mPluginResult = new PluginResult(PluginResult.Status.OK);
-			mCallbackContext.success(resultJson);
-			mCallbackContext.sendPluginResult(mPluginResult);
-			// }
-			return true;
+            FileInputStream raw;
+            
+            try {
+                raw  = new FileInputStream(filePath);
+            } catch (FileNotFoundException e) {
+                JSONObject resultJson = new JSONObject();
+                resultJson.put("status", "error");
+                resultJson.put("error", "File not found");
+                mPluginResult = new PluginResult(PluginResult.Status.OK);
+                mCallbackContext.success(resultJson);
+                mCallbackContext.sendPluginResult(mPluginResult);
+                return true;
+            }
 
+            final PDFController controller = new PDFController(raw);
+            final String hash = controller.calculateHash();
+
+            // stamp document
+            TSAGatewayClientAsync client = new TSAGatewayClientAsync(gateway, insecure);
+            client.requestStamp(hash, new TSAGatewayClientAsync.Callback() {
+                @Override
+                public void onSuccess(String stamp) {
+                    try {
+                        File tempFile = new File(outputPath);
+                        controller.writeStampId(tempFile, "teststampid");
+                    } catch (IOException e) {
+                        try {
+                            JSONObject resultJson = new JSONObject();
+                            resultJson.put("status", "error");
+                            resultJson.put("error", "Failed to write output file");
+                            mPluginResult = new PluginResult(PluginResult.Status.OK);
+                            mCallbackContext.success(resultJson);
+                            mCallbackContext.sendPluginResult(mPluginResult);
+                            return;
+                        } catch (JSONException e2) {
+                            e2.printStackTrace();
+                        }
+                    }
+                    try {
+                        JSONObject resultJson = new JSONObject();
+                        resultJson.put("status", "ok");
+                        resultJson.put("hash", hash);
+                        resultJson.put("stamp", stamp);
+                        mPluginResult = new PluginResult(PluginResult.Status.OK);
+                        mCallbackContext.success(resultJson);
+                        mCallbackContext.sendPluginResult(mPluginResult);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    return;
+                }
+
+                @Override
+                public void onTSAFailure(TSAGatewayException e) {
+                    try {
+                        JSONObject resultJson = new JSONObject();
+                        resultJson.put("status", "error");
+                        resultJson.put("error", "Failed to stamp document using TSA - " + e.getErrorCode());
+                        mPluginResult = new PluginResult(PluginResult.Status.OK);
+                        mCallbackContext.success(resultJson);
+                        mCallbackContext.sendPluginResult(mPluginResult);
+                    } catch (JSONException e2) {
+                        e2.printStackTrace();
+                    }
+                    return;
+                }
+
+                @Override
+                public void onIOFailure(IOException e) {
+                    try {
+                        e.printStackTrace();
+                        JSONObject resultJson = new JSONObject();
+                        resultJson.put("status", "error");
+                        resultJson.put("error", "Failed to connect to TSA");
+                        mPluginResult = new PluginResult(PluginResult.Status.OK);
+                        mCallbackContext.success(resultJson);
+                        mCallbackContext.sendPluginResult(mPluginResult);
+                    } catch (JSONException e2) {
+                        e2.printStackTrace();
+                    }
+                    return;
+                }
+            });
+            return true;
 		}
 		return false;
 	}

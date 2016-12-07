@@ -17,12 +17,13 @@
     <!-- android -->
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
-            <feature name="TSA" >
+            <feature name="TSAClient" >
                 <param name="android-package" value="com.cordova.plugin.android.tsa.TSAClient"/>
             </feature>
         </config-file>
         <config-file target="AndroidManifest.xml" parent="/*">
-            <!--<uses-permission android:name="android.permission.USE_FINGERPRINT" />-->
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
             <!--<uses-sdk android:minSdkVersion="23" android:targetSdkVersion="23" />-->
         </config-file>
 
