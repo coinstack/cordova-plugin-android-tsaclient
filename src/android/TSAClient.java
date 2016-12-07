@@ -130,7 +130,7 @@ public class TSAClient extends CordovaPlugin {
                 public void onSuccess(String stamp) {
                     try {
                         File tempFile = new File(outputPath);
-                        controller.writeStampId(tempFile, "teststampid");
+                        controller.writeStampId(tempFile, stamp);
                     } catch (IOException e) {
                         try {
                             JSONObject resultJson = new JSONObject();
